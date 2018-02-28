@@ -1,0 +1,1 @@
+include ':app', ':RDPermissionslib', ':RDPermissions-annotation', ':RDPermissions-processor'
