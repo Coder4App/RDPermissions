@@ -56,13 +56,8 @@ public abstract class BaseWrapper implements Wrapper {
         if (!cacheMap.containsKey(getActivity().hashCode())) {
             cacheMap.put(getActivity().hashCode(),
                     new WeakReference(
-                            new CacheWrapper(getProxy(requestProxyObject.getClass().getSimpleName()), requestProxyObject)));
-        }
-
-        Object requestResultProxy = cacheMap.get(getActivity().hashCode()).get().getRequestResultProxy().get();
-
-        if (requestResultProxy == null) {
-            cacheMap.get(getActivity().hashCode()).get().setRequestResultProxy(requestResultProxy);
+                            new CacheWrapper(getProxy(requestProxyObject.getClass().getSimpleName()), requestProxyObject,this)));
+            return this;
         }
 
         return this;
@@ -72,8 +67,6 @@ public abstract class BaseWrapper implements Wrapper {
     public void request() {
         if (!cacheMap.containsKey(getActivity().hashCode())) {
             cacheMap.put(getActivity().hashCode(), new WeakReference(new CacheWrapper(this)));
-        } else {
-            cacheMap.get(getActivity().hashCode()).get().setWapper(this);
         }
     }
 
@@ -106,6 +99,8 @@ public abstract class BaseWrapper implements Wrapper {
         return false;
     }
 
+
+    /** 反射获取apt生成的类 */
     public Object getProxy(String className) {
         String proxyName = PMConstant.packageName + "." + className + PERMISSIONS_PROXY;
 
@@ -173,6 +168,12 @@ public abstract class BaseWrapper implements Wrapper {
         public CacheWrapper(Object requestResultProxy, Object target) {
             this.requestResultProxy = new WeakReference(requestResultProxy);
             this.target = new WeakReference(target);
+        }
+
+        public CacheWrapper(Object requestResultProxy, Object target , BaseWrapper wapper) {
+            this.requestResultProxy = new WeakReference(requestResultProxy);
+            this.target = new WeakReference(target);
+            this.wapper = new WeakReference(wapper);
         }
 
         public WeakReference getRequestResultProxy() {

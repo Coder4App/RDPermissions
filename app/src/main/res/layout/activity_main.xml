@@ -9,16 +9,22 @@
             type="com.erongdu.wireless.permissions.MainCtrl" />
     </data>
 
-    <LinearLayout
+    <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:gravity="center">
+        android:layout_height="match_parent">
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:onClick="@{(view)->viewCtrl.jumpClick(view)}"
+            android:text="jump to permission act" />
 
         <Button
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="requsetPermissions"
-            android:onClick="@{(view)->viewCtrl.requsetPermissionClick(view)}"/>
+            android:layout_centerInParent="true"
+            android:onClick="@{(view)->viewCtrl.requsetPermissionClick(view)}"
+            android:text="requsetPermissions" />
 
-    </LinearLayout>
+    </RelativeLayout>
 </layout>

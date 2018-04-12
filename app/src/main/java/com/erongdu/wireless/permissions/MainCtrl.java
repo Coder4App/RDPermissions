@@ -2,6 +2,7 @@ package com.erongdu.wireless.permissions;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.content.ComponentName;
 import android.content.ContentResolver;
 import android.content.Intent;
 import android.database.Cursor;
@@ -56,6 +57,16 @@ public class MainCtrl {
         //                camera();
     }
 
+    public void jumpClick(View view) {
+        Intent intent = new Intent();
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        //        intent.setClassName("com.miui.securitycenter","com.miui.permcenter.permissions.AppPermissionsEditorActivity");
+        ComponentName componentName = new ComponentName("com.miui.securitycenter", "com.miui.permcenter.permissions.PermissionsEditorActivity");
+        intent.setComponent(componentName);
+        intent.putExtra("extra_pkgname", "com.erongdu.wireless.permissions");
+        ActivityManage.peek().startActivity(intent);
+    }
+
     /** 日历查询 */
     @SuppressLint("MissingPermission")
     private void calendar() {
@@ -104,11 +115,11 @@ public class MainCtrl {
     @PermissionGranted
     public void permissionsGrant(@RequestCode int requestCode, String stringType, @PMArray String[] permissions, int intType,
                                  long longType, float floatType, double doubleType, @GrantResult int[] grantResults, boolean booleanType) {
-//        Toast.makeText(ActivityManage.peek(), "permissionsGrant "+permissions[0], Toast.LENGTH_LONG).show();
+        //        Toast.makeText(ActivityManage.peek(), "permissionsGrant "+permissions[0], Toast.LENGTH_LONG).show();
     }
 
     @PermissionDenied
-    public void permissionsDeny(@RequestCode int requestCode,@PMArray String[] permissions,@GrantResult int[] grantResults) {
-        Toast.makeText(ActivityManage.peek(), "permissionsDeny "+permissions[0], Toast.LENGTH_LONG).show();
+    public void permissionsDeny(@RequestCode int requestCode, @PMArray String[] permissions, @GrantResult int[] grantResults) {
+        Toast.makeText(ActivityManage.peek(), "permissionsDeny " + permissions[0], Toast.LENGTH_LONG).show();
     }
 }

@@ -37,7 +37,8 @@ public class ActivityWrapper extends BaseWrapper {
 
                 ActivityCompat.requestPermissions(getActivity(), deniedList, getRequestCode());
             } else {
-                ActivityCompat.requestPermissions(getActivity(), deniedList, getRequestCode());
+
+
             }
         }
     }

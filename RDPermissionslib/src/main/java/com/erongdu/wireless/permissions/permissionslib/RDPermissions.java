@@ -25,7 +25,7 @@ public class RDPermissions {
     private static void onPrivateRequestPermissionsResult(Activity activity, int requestCode, String[] permissions, int[] grantResults) {
         int key = activity.hashCode();
 
-        if (BaseWrapper.cacheMap.get(key).get().getWapper() == null) {
+        if (BaseWrapper.cacheMap.get(key).get().getRequestResultProxy() == null) {
             return;
         }
 
