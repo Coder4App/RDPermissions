@@ -51,7 +51,7 @@
                 android:layout_width="40dp"
                 android:layout_height="match_parent"
                 android:layout_alignParentRight="true"
-                app:sidebarRadius="50dp"
+                app:sidebarRadius="30dp"
                 app:sidebarTextSize="14sp"/>
         </RelativeLayout>
     </LinearLayout>

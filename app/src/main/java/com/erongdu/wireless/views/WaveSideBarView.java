@@ -9,7 +9,6 @@ import android.graphics.Paint;
 import android.graphics.Path;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 
@@ -106,12 +105,11 @@ public class WaveSideBarView extends View {
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        float x = event.getX();
         float y = event.getY();
 
         oldChoose = mChoose;
-        mChoose = (int) Math.floor(y / mItemHeight);
-        Log.d(TAG, "mChoose " + mChoose + "/ name" + mLetters.get(mChoose));
+        mChoose = (int) Math.max(0, Math.floor(y / mItemHeight));
+
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
                 mCenterY = (int) y;
@@ -150,6 +148,8 @@ public class WaveSideBarView extends View {
         drawWavePath(canvas);
         //绘制圆球
         drawBallPath(canvas);
+        //绘制圆球中的文字
+        drawBallText(canvas);
     }
 
     /**
@@ -202,11 +202,26 @@ public class WaveSideBarView extends View {
 
     /** 绘制圆球 */
     private void drawBallPath(Canvas canvas) {
-        mBallCentreX = (mWidth + mBallRadius) - ( 2 * mBallRadius + (int)(1.8f * mRadius * Math.sin(ANGLE_R)) ) * mRatio;
+        mBallCentreX = (mWidth + mBallRadius) - (2 * mBallRadius + (int) (1.8f * mRadius * Math.sin(ANGLE_R))) * mRatio;
 
         mBallPath.reset();
-        mBallPath.addCircle(mBallCentreX,mCenterY,mBallRadius, Path.Direction.CCW);
-        canvas.drawPath(mBallPath,mWavePaint);
+        mBallPath.addCircle(mBallCentreX, mCenterY, mBallRadius, Path.Direction.CCW);
+        canvas.drawPath(mBallPath, mWavePaint);
+    }
+
+    /** 绘制圆球中的文字 */
+    private void drawBallText(Canvas canvas) {
+        if (mRatio > 0.8) {
+            mLetterPaint.setColor(mTextNormalColor);
+            mLetterPaint.setAntiAlias(true);
+            mLetterPaint.setTextSize(mTextSize);
+            mLetterPaint.setTextAlign(Paint.Align.CENTER);
+
+            Paint.FontMetrics metrics    = mLetterPaint.getFontMetrics();
+            float             textHeight = Math.abs(-metrics.top - metrics.bottom);
+
+            canvas.drawText(mLetters.get(mChoose), mBallCentreX, mCenterY + textHeight / 2, mLetterPaint);
+        }
     }
 
     private void startAnimator(float... value) {
