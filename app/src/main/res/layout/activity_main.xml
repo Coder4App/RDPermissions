@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<layout xmlns:android="http://schemas.android.com/apk/res/android">
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <data>
 
@@ -9,22 +10,36 @@
             type="com.erongdu.wireless.permissions.MainCtrl" />
     </data>
 
-    <RelativeLayout
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
-        <Button
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_centerHorizontal="true"
-            android:onClick="@{(view)->viewCtrl.jumpClick(view)}"
-            android:text="jump to permission act" />
+        android:layout_height="match_parent"
+        android:orientation="vertical">
 
-        <Button
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_centerInParent="true"
-            android:onClick="@{(view)->viewCtrl.requsetPermissionClick(view)}"
-            android:text="requsetPermissions" />
+            android:orientation="horizontal"
+            android:background="#998877">
 
-    </RelativeLayout>
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerHorizontal="true"
+                android:onClick="@{(view)->viewCtrl.jumpClick(view)}"
+                android:text="jump to permission act" />
+
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                android:onClick="@{(view)->viewCtrl.requsetPermissionClick(view)}"
+                android:text="requsetPermissions" />
+        </LinearLayout>
+
+        <android.support.v7.widget.RecyclerView
+            android:id="@+id/main_recycle"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            app:recyclerAdapter="@{viewCtrl.adapter}"/>
+    </LinearLayout>
 </layout>

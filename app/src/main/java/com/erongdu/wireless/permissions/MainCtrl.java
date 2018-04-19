@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.provider.CalendarContract;
+import android.support.v7.widget.LinearLayoutManager;
 import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
@@ -19,12 +20,19 @@ import com.erongdu.wireless.permissions.annotation.PermissionGranted;
 import com.erongdu.wireless.permissions.annotation.RequestCode;
 import com.erongdu.wireless.permissions.databinding.ActivityMainBinding;
 import com.erongdu.wireless.permissions.permissionslib.RDPermissions;
+import com.erongdu.wireless.ui.BaseBindingAdapter;
+import com.erongdu.wireless.ui.BaseBindingVH;
 import com.erongdu.wireless.utils.ActivityManage;
 import com.erongdu.wireless.utils.BaseParams;
+import com.erongdu.wireless.utils.BaseRecycleCtrl;
+import com.erongdu.wireless.utils.GroupListener;
+import com.erongdu.wireless.utils.StickyItemDecoration;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Author: chenwei
@@ -33,11 +41,63 @@ import java.io.IOException;
  * <p>
  * Description: viewCtrl {@link MainActivity}
  */
-public class MainCtrl {
+public class MainCtrl extends BaseRecycleCtrl {
     private ActivityMainBinding binding;
+    private List<ItemModel> items = new ArrayList();
 
     public MainCtrl(ActivityMainBinding binding) {
         this.binding = binding;
+        init();
+    }
+
+    private void init() {
+        setAdapter(new BaseBindingAdapter<ItemModel, BaseBindingVH>(R.layout.main_item, items) {
+            @Override
+            protected void convert(BaseBindingVH helper, ItemModel item) {
+                helper.getBingding().setVariable(BR.item, item);
+            }
+        });
+
+        binding.mainRecycle.setLayoutManager(new LinearLayoutManager(ActivityManage.peek()));
+        StickyItemDecoration itemDecoration = new StickyItemDecoration();
+        itemDecoration.setListener(new GroupListener() {
+            @Override
+            public String getGroupName(int position) {
+                return items.get(position).getGroup();
+            }
+        });
+        binding.mainRecycle.addItemDecoration(itemDecoration);
+
+        ItemModel item0 = new ItemModel("0", "test0");
+        items.add(item0);
+        ItemModel item0_1 = new ItemModel("0", "test0_1");
+        items.add(item0_1);
+        ItemModel item0_2 = new ItemModel("0", "test0_2");
+        items.add(item0_2);
+        ItemModel item1 = new ItemModel("1", "test1");
+        items.add(item1);
+        ItemModel item1_1 = new ItemModel("1", "test1_1");
+        items.add(item1_1);
+        ItemModel item1_2 = new ItemModel("1", "test1_2");
+        items.add(item1_2);
+        ItemModel item2 = new ItemModel("2", "test2");
+        items.add(item2);
+        ItemModel item3 = new ItemModel("3", "test3");
+        items.add(item3);
+        ItemModel item4 = new ItemModel("4", "test4");
+        items.add(item4);
+        ItemModel item5 = new ItemModel("5", "test5");
+        items.add(item5);
+        ItemModel item6 = new ItemModel("6", "test6");
+        items.add(item6);
+        ItemModel item7 = new ItemModel("7", "test7");
+        items.add(item7);
+        ItemModel item8 = new ItemModel("8", "test8");
+        items.add(item8);
+        ItemModel item9 = new ItemModel("9", "test9");
+        items.add(item9);
+
+        getAdapter().notifyDataSetChanged();
     }
 
     public void requsetPermissionClick(View view) {

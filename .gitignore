@@ -1,0 +1,16 @@
+
+*.lock
+*.properties
+*.iml
+*.json
+*.store
+*.ap_
+*.flat
+*.txt
+*.rawproto
+app/build
+RDPermissions-annotation/build
+RDPermissionslib/build
+RDPermissions-processor/build
+.idea
+.gradle

@@ -117,6 +117,10 @@ public abstract class BaseWrapper implements Wrapper {
         return null;
     }
 
+    /**
+     * 分析权限授权结果
+     *
+     */
     public void analysisPermission(String[] permissions, int[] grantResults) {
         StringBuffer grantSB = new StringBuffer();
         StringBuffer denySB  = new StringBuffer();
