@@ -25,7 +25,7 @@ public class StickyItemDecoration extends RecyclerView.ItemDecoration {
     public StickyItemDecoration() {
         mPaint = new Paint();
         mTextPaint = new Paint();
-        mPaint.setColor(ActivityManage.peek().getResources().getColor(R.color.white));
+        mPaint.setColor(ActivityManage.peek().getResources().getColor(R.color.colorAccent));
         mTextPaint.setColor(ActivityManage.peek().getResources().getColor(R.color.colorAccent));
     }
 
