@@ -54,16 +54,15 @@
                 app:sidebarRadius="30dp"
                 app:sidebarTextSize="14sp" />
 
-
             <com.erongdu.wireless.views.FloatingMenuView
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
+                android:layout_alignParentBottom="true"
+                android:layout_alignParentRight="true"
+                android:background="@color/colorPrimary"
                 android:paddingLeft="10dp"
                 android:paddingTop="10dp"
-                android:background="@color/colorPrimary"
-                app:FMmenuImageRes="@drawable/login_pic_gesture_head"
-                app:FMitemImageRes="@array/img"
-                app:FMmenuOffset="20dp"/>
+                app:FMhomeImageRes="@drawable/login_pic_gesture_head" />
         </RelativeLayout>
     </LinearLayout>
 </layout>

@@ -11,9 +11,11 @@
     </declare-styleable>
 
     <declare-styleable name="FloatingMenuView">
-        <attr name="FMmenuImageRes" format="reference" />
+        <attr name="FMhomeImageRes" format="reference" />
         <attr name="FMitemImageRes" format="reference" />
-        <attr name="FMmenuOffset" format="dimension" />
+        <attr name="FMoffsetTohome" format="dimension" />
+        <attr name="FMitemRadius" format="dimension" />
+        <attr name="FMinnerPadding" format="dimension" />
     </declare-styleable>
 
 </resources>

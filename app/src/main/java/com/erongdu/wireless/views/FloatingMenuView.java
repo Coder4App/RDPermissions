@@ -1,5 +1,7 @@
 package com.erongdu.wireless.views;
 
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
 import android.animation.ValueAnimator;
 import android.content.Context;
 import android.content.res.TypedArray;
@@ -10,6 +12,7 @@ import android.graphics.drawable.BitmapDrawable;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
 import android.util.Log;
+import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
@@ -24,34 +27,50 @@ import com.erongdu.wireless.permissions.R;
  * Description:
  */
 public class FloatingMenuView extends FrameLayout {
-    private static final String TAG          = "FloatingMenuView";
+    private static final String TAG        = "FloatingMenuView";
+    private final        double PI         = Math.PI;
     //左边
-    private static final int    POS_LEFT     = 0;
+    private static final int    POS_LEFT   = 0;
     //右边
-    private static final int    POS_RIGHT    = 1;
-    //上一次的位置
-    private              int    lastPosition = POS_LEFT;
-    //当前位置
-    private int              currentPosition;
-    //主菜单drawable
-    private BitmapDrawable   menuDrawable;
-    //子菜单drawable
-    private BitmapDrawable[] itemDrawableList;
-    //主菜单和子菜单之间的间距
-    private float            menuOffset;
+    private static final int    POS_RIGHT  = 1;
+    //顶部
+    private static final int    POS_TOP    = 2;
+    //底部
+    private static final int    POS_BOTTOM = 3;
+    //上一次横向的位置
+    private int            lastHorizontalPosition;
+    //当前横向位置
+    private int            currentHorizontalPosition;
+    //上一次的纵向位置
+    private int            lastVerticalPosition;
+    //当前纵向位置
+    private int            currentVerticalPosition;
+    //主按钮drawable
+    private BitmapDrawable homeDrawable;
+    //画笔
     private Paint mPaint = new Paint();
     //父控件的宽度
-    private int           parentWidth;
+    private int             parentWidth;
     //父控件的高度
-    private int           parentHeight;
+    private int             parentHeight;
     //控件的高度
-    private int           mHeight;
+    private int             mHeight;
     //控件的宽度
-    private int           mWidth;
+    private int             mWidth;
+    //子菜单半径
+    private int             itemRadius;
+    //主菜单和子菜单之间的间距
+    private float           offsetToHome;
+    //主菜单的内边距
+    private float           innerPadding;
     //主菜单绘制的边框
-    private Rect          rectMenu;
+    private Rect            rectHome;
     //主菜单动画
-    private ValueAnimator valueAnimator;
+    private ValueAnimator   valueAnimator;
+    //手势监听类
+    private GestureDetector gestureDetector;
+    //是否显示菜单
+    private boolean         showMenu;
 
     public FloatingMenuView(Context context) {
         this(context, null);
@@ -69,29 +88,30 @@ public class FloatingMenuView extends FrameLayout {
     private void init(Context context, AttributeSet attrs) {
         TypedArray ta = context.obtainStyledAttributes(attrs, R.styleable.FloatingMenuView);
         if (ta != null) {
-
-            menuDrawable = (BitmapDrawable) ta.getDrawable(R.styleable.FloatingMenuView_FMmenuImageRes);
-            menuOffset = ta.getDimensionPixelOffset(R.styleable.FloatingMenuView_FMmenuOffset, 20);
-            getItemResArray(ta.getResourceId(R.styleable.FloatingMenuView_FMitemImageRes, -1));
+            homeDrawable = (BitmapDrawable) ta.getDrawable(R.styleable.FloatingMenuView_FMhomeImageRes);
+            offsetToHome = ta.getDimensionPixelOffset(R.styleable.FloatingMenuView_FMoffsetTohome, 30);
+            itemRadius = ta.getDimensionPixelOffset(R.styleable.FloatingMenuView_FMitemRadius, 20);
+            innerPadding = ta.getDimensionPixelOffset(R.styleable.FloatingMenuView_FMinnerPadding, 10);
         }
         ta.recycle();
 
-        rectMenu = new Rect();
+        gestureDetector = new GestureDetector(context, gestureListener);
+        rectHome = new Rect();
     }
 
     @Override
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
         super.onSizeChanged(w, h, oldw, oldh);
+        parentWidth = ((ViewGroup) getParent()).getWidth();
+        parentHeight = ((ViewGroup) getParent()).getHeight();
+        currentHorizontalPosition = lastHorizontalPosition = getHorizontalPos();
+        currentVerticalPosition = lastVerticalPosition = getVerticalPos();
     }
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-
-        mHeight = measureHeight();
-        mWidth = measureWidth();
-        parentWidth = ((ViewGroup) getParent()).getWidth();
-        parentHeight = ((ViewGroup) getParent()).getHeight();
+        mHeight = mWidth = getWidthAndHeight();
         setMeasuredDimension(mHeight, mWidth);
     }
 
@@ -99,29 +119,26 @@ public class FloatingMenuView extends FrameLayout {
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
 
-        rectMenu.set(getPaddingLeft(), getPaddingTop(), getPaddingLeft() + menuDrawable.getIntrinsicWidth(), getPaddingTop() + menuDrawable
-                .getIntrinsicHeight());
-        canvas.drawBitmap(menuDrawable.getBitmap(), null, rectMenu, mPaint);
+        drawHomeDrawable(canvas);
+
         //        canvas.drawBitmap(menuDrawable.getBitmap(), getPaddingLeft(), getPaddingTop(), mPaint);
     }
 
-    @Override
-    protected void onFinishInflate() {
-        super.onFinishInflate();
-        Log.i(TAG, "onFinishInflate" + getTop());
-    }
-
+    //上一次点击的x轴
     private int lastPosX;
+    //上一次点击的y轴
     private int lastPosY;
 
     @Override
-    public boolean dispatchTouchEvent(MotionEvent ev) {
+    public boolean onTouchEvent(MotionEvent ev) {
+        //用于监听手势是否是点击还是滑动
+        gestureDetector.onTouchEvent(ev);
+
         int currentPosX = (int) ev.getX();
         int currentPoxY = (int) ev.getY();
         switch (ev.getAction()) {
             case MotionEvent.ACTION_DOWN:
-                Log.i(TAG, "onInterceptTouchEvent ACTION_DOWN");
-                if (rectMenu.contains(currentPosX, currentPoxY)) {
+                if (rectHome.contains(currentPosX, currentPoxY)) {
                     lastPosX = currentPosX;
                     lastPosY = currentPoxY;
                     return true;
@@ -132,10 +149,11 @@ public class FloatingMenuView extends FrameLayout {
                 int deltaY = currentPoxY - lastPosY;
                 offsetLeftAndRight(deltaX);
 
-                Log.i(TAG, "onInterceptTouchEvent ACTION_MOVE " + getTop() + "／" + getBottom()+"////deltaY"+deltaY);
                 if ((getTop() + deltaY < 0 && deltaY < 0)) {
+                    //防止滑出顶部
                     offsetTopAndBottom(-getTop());
-                } else if ((getBottom() + deltaY > parentHeight && deltaY >0)) {
+                } else if ((getBottom() + deltaY > parentHeight && deltaY > 0)) {
+                    //防止滑出底部
                     offsetTopAndBottom(parentHeight - getBottom());
                 } else {
                     offsetTopAndBottom(deltaY);
@@ -144,9 +162,7 @@ public class FloatingMenuView extends FrameLayout {
                 break;
             case MotionEvent.ACTION_CANCEL:
             case MotionEvent.ACTION_UP:
-                Log.i(TAG, "onInterceptTouchEvent ACTION_UP");
-                resolvePos();
-                autoMoveBack();
+                autoMoveToEdge();
                 break;
         }
         return super.onInterceptTouchEvent(ev);
@@ -155,37 +171,128 @@ public class FloatingMenuView extends FrameLayout {
     //*********************************/
 
     /**
-     * 解析当前位置在屏幕的 left 还是 right
-     * left：
-     * right：
+     * 绘制主按钮
      */
-    private void resolvePos() {
-        if (lastPosition == POS_LEFT && (getRight() <= (parentWidth / 2 + getMeasuredWidth() / 2))) {
-            currentPosition = POS_LEFT;
-            lastPosition = POS_LEFT;
-        } else if (lastPosition == POS_LEFT && (getRight() > (parentWidth / 2 + getMeasuredWidth() / 2))) {
-            currentPosition = POS_RIGHT;
-            lastPosition = POS_RIGHT;
-        } else if (lastPosition == POS_RIGHT && (getLeft() >= (parentWidth / 2 - getMeasuredWidth() / 2))) {
-            currentPosition = POS_RIGHT;
-            lastPosition = POS_RIGHT;
-        } else if (lastPosition == POS_RIGHT && (getLeft() < (parentWidth / 2 - getMeasuredWidth() / 2))) {
-            currentPosition = POS_LEFT;
-            lastPosition = POS_LEFT;
+    private void drawHomeDrawable(Canvas canvas) {
+        int left, top, right, bottom;
+        if (getVerticalPos() == POS_TOP && getHorizontalPos() == POS_LEFT) {
+            //左上位置
+            left = (int) innerPadding;
+            top = (int) innerPadding;
+            right = left + homeDrawable.getIntrinsicWidth();
+            bottom = top + homeDrawable.getIntrinsicHeight();
+        } else if (getVerticalPos() == POS_TOP && getHorizontalPos() == POS_RIGHT) {
+            //右上位置
+            left = (int) (mWidth - innerPadding - homeDrawable.getIntrinsicWidth());
+            top = (int) innerPadding;
+            right = left + homeDrawable.getIntrinsicWidth();
+            bottom = top + homeDrawable.getIntrinsicHeight();
+        } else if (getVerticalPos() == POS_BOTTOM && getHorizontalPos() == POS_RIGHT) {
+            //右下位置
+            left = (int) (mWidth - innerPadding - homeDrawable.getIntrinsicWidth());
+            top = (int) (mHeight - innerPadding - homeDrawable.getIntrinsicHeight());
+            right = left + homeDrawable.getIntrinsicWidth();
+            bottom = top + homeDrawable.getIntrinsicHeight();
+        } else {
+            //左下位置
+            left = (int) innerPadding;
+            top = (int) (mHeight - innerPadding - homeDrawable.getIntrinsicHeight());
+            right = left + homeDrawable.getIntrinsicWidth();
+            bottom = top + homeDrawable.getIntrinsicHeight();
+        }
+        rectHome.set(left, top, right, bottom);
+        canvas.drawBitmap(homeDrawable.getBitmap(), null, rectHome, mPaint);
+    }
+
+    /**
+     * 手势类型监听类
+     */
+    private GestureDetector.OnGestureListener gestureListener = new GestureDetector.OnGestureListener() {
+        @Override
+        public boolean onDown(MotionEvent e) {
+            return true;
+        }
+
+        @Override
+        public void onShowPress(MotionEvent e) {
+
+        }
+
+        @Override
+        public boolean onSingleTapUp(MotionEvent e) {
+            Log.i(TAG, "onSingleTapUp");
+            return false;
+        }
+
+        @Override
+        public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
+            return false;
+        }
+
+        @Override
+        public void onLongPress(MotionEvent e) {
+        }
+
+        @Override
+        public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
+            return false;
+        }
+    };
+
+    /**
+     * 解析当前位置在屏幕的 left 还是 right
+     */
+    private void resolveHorizontalPos() {
+        if (lastHorizontalPosition == POS_LEFT && (getRight() <= (parentWidth / 2 + getMeasuredWidth() / 2))) {
+            currentHorizontalPosition = POS_LEFT;
+        } else if (lastHorizontalPosition == POS_LEFT && (getRight() > (parentWidth / 2 + getMeasuredWidth() / 2))) {
+            currentHorizontalPosition = POS_RIGHT;
+        } else if (lastHorizontalPosition == POS_RIGHT && (getLeft() >= (parentWidth / 2 - getMeasuredWidth() / 2))) {
+            currentHorizontalPosition = POS_RIGHT;
+        } else if (lastHorizontalPosition == POS_RIGHT && (getLeft() < (parentWidth / 2 - getMeasuredWidth() / 2))) {
+            currentHorizontalPosition = POS_LEFT;
+        }
+    }
+
+    /**
+     * 获取当前位置在屏幕横向方向是 left 还是right
+     */
+    private int getHorizontalPos() {
+        if (getRight() > (parentWidth / 2 + mWidth / 2)) {
+            return POS_RIGHT;
+        } else {
+            return POS_LEFT;
+        }
+    }
+
+    /**
+     * 获取当前位置在屏幕垂直方向是 top 还是bottom
+     */
+    private int getVerticalPos() {
+        if (getBottom() >= (parentHeight / 2 + mHeight / 2)) {
+            return POS_BOTTOM;
+        } else {
+            return POS_TOP;
         }
     }
 
     /**
      * 回到边缘的动画
      */
-    private void autoMoveBack() {
+    private void autoMoveToEdge() {
+
+        resolveHorizontalPos();
+
         if (valueAnimator == null) {
             valueAnimator = new ValueAnimator();
+        } else {
+            valueAnimator.removeAllUpdateListeners();
+            valueAnimator.removeAllListeners();
         }
 
-        float       distance = 0;
+        float       distance;
         final float startPosValue;
-        if (currentPosition == POS_LEFT) {
+        if (currentHorizontalPosition == POS_LEFT) {
             distance = getLeft();
             startPosValue = getLeft();
         } else {
@@ -199,44 +306,34 @@ public class FloatingMenuView extends FrameLayout {
             public void onAnimationUpdate(ValueAnimator animation) {
                 float value = (float) animation.getAnimatedValue();
 
-                if (currentPosition == POS_LEFT) {
+                if (currentHorizontalPosition == POS_LEFT) {
                     offsetLeftAndRight(-(int) (getLeft() - (startPosValue - value)));
                 } else {
                     offsetLeftAndRight((int) ((startPosValue + value) - getRight()));
                 }
             }
         });
+
+        valueAnimator.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                lastVerticalPosition = getVerticalPos();
+                if ((lastVerticalPosition != currentVerticalPosition) || (lastHorizontalPosition != currentHorizontalPosition)) {
+                    invalidate();
+                }
+                lastVerticalPosition = currentVerticalPosition;
+                lastHorizontalPosition = currentHorizontalPosition;
+            }
+        });
+
         valueAnimator.start();
     }
 
     /**
-     * 测量控件的高度
+     * 获取控件的宽高
      */
-    private int measureHeight() {
-        int paddingVertical = Math.max(getPaddingBottom(), getPaddingTop());
-        return menuDrawable.getIntrinsicHeight() + itemDrawableList[0].getIntrinsicHeight() + paddingVertical;
-    }
-
-    /**
-     * 测量控件的宽度
-     */
-    private int measureWidth() {
-        int paddingHorizontal = Math.max(getPaddingLeft(), getPaddingRight());
-        return menuDrawable.getIntrinsicWidth() + itemDrawableList[0].getIntrinsicWidth() + paddingHorizontal;
-    }
-
-    /**
-     * 获取所有item
-     */
-    private void getItemResArray(int resID) {
-        if (resID == -1) {
-            return;
-        }
-        TypedArray resArrayID = getResources().obtainTypedArray(resID);
-        itemDrawableList = new BitmapDrawable[resArrayID.length()];
-        for (int i = 0; i < resArrayID.length(); i++) {
-            itemDrawableList[0] = (BitmapDrawable) getResources().getDrawable(resArrayID.getResourceId(i, 0));
-        }
-        resArrayID.recycle();
+    private int getWidthAndHeight() {
+        float homeDrawableRadius = Math.max(homeDrawable.getIntrinsicHeight(), homeDrawable.getIntrinsicWidth()) / 2;
+        return (int) (Math.floor((innerPadding + homeDrawableRadius) / Math.sin(PI / 4) + homeDrawableRadius + offsetToHome + 2 * itemRadius));
     }
 }
