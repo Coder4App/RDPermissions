@@ -4,9 +4,16 @@
         <attr name="sidebarRadius" format="dimension" />
         <attr name="sidebarTextChoseColor" format="color|reference" />
         <attr name="sidebarTextNormalColor" format="color|reference" />
-        <attr name="sidebarTextSize" format="dimension"/>
-        <attr name="sidebarBackgroundColor" format="color|reference"/>
-        <attr name="sidebarWidth" format="color|reference"/>
-        <attr name="sidebarBallRadius" format="dimension"/>
+        <attr name="sidebarTextSize" format="dimension" />
+        <attr name="sidebarBackgroundColor" format="color|reference" />
+        <attr name="sidebarWidth" format="color|reference" />
+        <attr name="sidebarBallRadius" format="dimension" />
     </declare-styleable>
+
+    <declare-styleable name="FloatingMenuView">
+        <attr name="FMmenuImageRes" format="reference" />
+        <attr name="FMitemImageRes" format="reference" />
+        <attr name="FMmenuOffset" format="dimension" />
+    </declare-styleable>
+
 </resources>

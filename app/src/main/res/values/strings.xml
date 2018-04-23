@@ -30,4 +30,9 @@
         <item>Y</item>
         <item>Z</item>
     </array>
+    <array name="img">
+        <item>@drawable/p2p_portion</item>
+        <item>@drawable/p2p_repay_way</item>
+        <item>@drawable/p2p_security_level</item>
+    </array>
 </resources>
