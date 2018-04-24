@@ -22,6 +22,9 @@ import android.widget.FrameLayout;
 
 import com.erongdu.wireless.permissions.R;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Author: chenwei
  * E-mail: cw@erongdu.com
@@ -84,7 +87,7 @@ public class FloatingMenuView extends FrameLayout {
     //绘制路径时的path
     private Path            path;
     //item动画的比率
-    private float           ratio;
+    private float ratio = 1;
 
     public FloatingMenuView(Context context) {
         this(context, null);
@@ -113,7 +116,6 @@ public class FloatingMenuView extends FrameLayout {
         rectHome = new Rect();
         pathMeasure = new PathMeasure();
         path = new Path();
-        showMenu = false;
     }
 
     @Override
@@ -123,6 +125,7 @@ public class FloatingMenuView extends FrameLayout {
         parentHeight = ((ViewGroup) getParent()).getHeight();
         currentHorizontalPosition = lastHorizontalPosition = getHorizontalPos();
         currentVerticalPosition = lastVerticalPosition = getVerticalPos();
+        resolveItems();
     }
 
     @Override
@@ -135,10 +138,8 @@ public class FloatingMenuView extends FrameLayout {
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
+        drawItem(canvas);
         drawHomeDrawable(canvas);
-        if (showMenu) {
-            drawItem(canvas);
-        }
     }
 
     //上一次点击的x轴
@@ -155,6 +156,12 @@ public class FloatingMenuView extends FrameLayout {
         int currentPoxY = (int) ev.getY();
         switch (ev.getAction()) {
             case MotionEvent.ACTION_DOWN:
+                if (showMenu) {
+                    showMenu = !showMenu;
+                    openOrCloseMenu(0, 1);
+                    break;
+                }
+
                 if (rectHome.contains(currentPosX, currentPoxY)) {
                     lastPosX = currentPosX;
                     lastPosY = currentPoxY;
@@ -223,17 +230,55 @@ public class FloatingMenuView extends FrameLayout {
 
     //存贮 x,y坐标
     float[] pos = new float[2];
+    //主按钮的坐标
+    float homePosX, homePosY;
+    //存贮item的坐标
+    private List<ItemInfo> itemLists;
 
     /**
      * 绘制子菜单
      */
     private void drawItem(Canvas canvas) {
+
+        for (int i = 0; i < itemLists.size(); i++) {
+            path.reset();
+            if (showMenu) {
+                path.moveTo(homePosX, homePosY);
+                path.lineTo(itemLists.get(i).getPosX(), itemLists.get(i).getPosY());
+            } else {
+                path.moveTo(itemLists.get(i).getPosX(), itemLists.get(i).getPosY());
+                path.lineTo(homePosX, homePosY);
+            }
+            pathMeasure.setPath(path, false);
+            pathMeasure.getPosTan(pathMeasure.getLength() * ratio, pos, null);
+            canvas.drawCircle(pos[0], pos[1], itemRadius, mPaint);
+            Log.e(TAG, "pos=" + i + " / ratio = " + ratio + " / x = " + pos[0] + " / y =" + pos[1] + " / length " + pathMeasure.getLength() * ratio);
+        }
+    }
+
+    /**
+     *
+     */
+    private void resolveItems() {
+        mPaint.reset();
+        mPaint.setStyle(Paint.Style.FILL);
+        mPaint.setColor(Color.parseColor("#FF4081"));
+        mPaint.setStrokeWidth(1);
+
         //测试阶段用number暂时代替
         int number = 4;
         //弧度制
         double perAngle = (PI / 2 / number) / 2;
         //坐标位置
-        float homePosX, homePosY, itemPosX, itemPosY;
+        float itemPosX, itemPosY;
+
+        //初始化itemPoints
+        if (itemLists == null) {
+            itemLists = new ArrayList<>();
+            for (int i = 0; i < number; i++) {
+                itemLists.add(new ItemInfo());
+            }
+        }
 
         if (getVerticalPos() == POS_TOP && getHorizontalPos() == POS_LEFT) {
             //左上位置
@@ -242,8 +287,9 @@ public class FloatingMenuView extends FrameLayout {
             for (int i = 0; i < number; i++) {
                 itemPosX = (float) ((mHeight - itemRadius) * Math.sin((2 * i + 1) * perAngle));
                 itemPosY = (float) ((mWidth - itemRadius) * Math.cos((2 * i + 1) * perAngle));
-
-                drawItems(canvas, homePosX, homePosY, itemPosX, itemPosY);
+                itemLists.get(i).setPos(itemPosX, itemPosY);
+                itemLists.get(i).getRect().set((int) (itemPosX - itemRadius), (int) (itemPosY - itemRadius), (int) (itemPosX + itemRadius), (int) (itemPosY +
+                        itemPosY));
             }
         } else if (getVerticalPos() == POS_TOP && getHorizontalPos() == POS_RIGHT) {
             //右上位置
@@ -252,8 +298,9 @@ public class FloatingMenuView extends FrameLayout {
             for (int i = 0; i < number; i++) {
                 itemPosX = (float) (mWidth - (mWidth - itemRadius) * Math.cos((2 * i + 1) * perAngle));
                 itemPosY = (float) ((mHeight - itemRadius) * Math.sin((2 * i + 1) * perAngle));
-
-                drawItems(canvas, homePosX, homePosY, itemPosX, itemPosY);
+                itemLists.get(i).setPos(itemPosX, itemPosY);
+                itemLists.get(i).getRect().set((int) (itemPosX - itemRadius), (int) (itemPosY - itemRadius), (int) (itemPosX + itemRadius), (int) (itemPosY +
+                        itemPosY));
             }
         } else if (getVerticalPos() == POS_BOTTOM && getHorizontalPos() == POS_RIGHT) {
             //右下位置
@@ -262,7 +309,9 @@ public class FloatingMenuView extends FrameLayout {
             for (int i = 0; i < number; i++) {
                 itemPosY = (float) (mHeight - (mWidth - itemRadius) * Math.cos((2 * i + 1) * perAngle));
                 itemPosX = (float) (mWidth - (mHeight - itemRadius) * Math.sin((2 * i + 1) * perAngle));
-                drawItems(canvas, homePosX, homePosY, itemPosX, itemPosY);
+                itemLists.get(i).setPos(itemPosX, itemPosY);
+                itemLists.get(i).getRect().set((int) (itemPosX - itemRadius), (int) (itemPosY - itemRadius), (int) (itemPosX + itemRadius), (int) (itemPosY +
+                        itemPosY));
             }
         } else {
             //左下位置
@@ -272,23 +321,11 @@ public class FloatingMenuView extends FrameLayout {
             for (int i = 0; i < number; i++) {
                 itemPosX = (float) ((mWidth - itemRadius) * Math.cos((2 * i + 1) * perAngle));
                 itemPosY = (float) (mHeight - (mHeight - itemRadius) * Math.sin((2 * i + 1) * perAngle));
-
-                drawItems(canvas, homePosX, homePosY, itemPosX, itemPosY);
+                itemLists.get(i).setPos(itemPosX, itemPosY);
+                itemLists.get(i).getRect().set((int) (itemPosX - itemRadius), (int) (itemPosY - itemRadius), (int) (itemPosX + itemRadius), (int) (itemPosY +
+                        itemPosY));
             }
         }
-    }
-
-    private void drawItems(Canvas canvas, float homePosX, float homePosY, float itemPosX, float itemPosY) {
-        path.reset();
-        path.moveTo(homePosX, homePosY);
-        path.lineTo(itemPosX, itemPosY);
-        path.close();
-
-        pathMeasure.setPath(path, true);
-        pathMeasure.getPosTan(pathMeasure.getLength() * ratio, pos, null);
-        canvas.drawCircle(pos[0], pos[1], itemRadius, mPaint);
-
-        Log.e(TAG, "ratio = " + ratio + " / x = " + pos[0] + " / y =" + pos[1] + " / length " + pathMeasure.getLength());
     }
 
     /**
@@ -405,6 +442,8 @@ public class FloatingMenuView extends FrameLayout {
         homeAnimator.addListener(new AnimatorListenerAdapter() {
             @Override
             public void onAnimationEnd(Animator animation) {
+                //位置变动时 item的位置也需要重新变动
+                resolveItems();
                 currentVerticalPosition = getVerticalPos();
                 if ((lastVerticalPosition != currentVerticalPosition) || (lastHorizontalPosition != currentHorizontalPosition)) {
                     invalidate();
@@ -421,15 +460,13 @@ public class FloatingMenuView extends FrameLayout {
      * 打开或关闭菜单
      */
     private void openOrCloseMenu(float... values) {
-        mPaint.reset();
-        mPaint.setStyle(Paint.Style.FILL);
-        mPaint.setColor(Color.parseColor("#FF4081"));
-        mPaint.setStrokeWidth(1);
+        //        if ((lastVerticalPosition != currentVerticalPosition) || (lastHorizontalPosition != currentHorizontalPosition)) {
+        //如果位置发生过变化 重新获取item的各类信息
+        resolveItems();
+        //        }
 
         if (itemAnimator == null) {
             itemAnimator = new ValueAnimator();
-        } else {
-            itemAnimator.removeAllUpdateListeners();
         }
 
         itemAnimator.setFloatValues(values);
@@ -440,7 +477,12 @@ public class FloatingMenuView extends FrameLayout {
                 invalidate();
             }
         });
-
+        itemAnimator.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                super.onAnimationEnd(animation);
+            }
+        });
         itemAnimator.start();
     }
 
@@ -451,5 +493,45 @@ public class FloatingMenuView extends FrameLayout {
         //已左下角为基准 计算长宽
         homeDrawableRadius = Math.max(homeDrawable.getIntrinsicHeight(), homeDrawable.getIntrinsicWidth()) / 2;
         return (int) (Math.floor((innerPadding + homeDrawableRadius) / Math.sin(PI / 4) + homeDrawableRadius + offsetToHome + 2 * itemRadius));
+    }
+
+    //item 原点坐标和范围信息存储类
+    public class ItemInfo {
+        private float posX;
+        private float posY;
+        private Rect  rect;
+
+        public ItemInfo() {
+            rect = new Rect();
+        }
+
+        public void setPos(float x, float y) {
+            this.posX = x;
+            this.posY = y;
+        }
+
+        public float getPosX() {
+            return posX;
+        }
+
+        public void setPosX(float posX) {
+            this.posX = posX;
+        }
+
+        public float getPosY() {
+            return posY;
+        }
+
+        public void setPosY(float posY) {
+            this.posY = posY;
+        }
+
+        public Rect getRect() {
+            return rect;
+        }
+
+        public void setRect(Rect rect) {
+            this.rect = rect;
+        }
     }
 }
