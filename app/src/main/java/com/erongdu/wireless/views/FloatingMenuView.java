@@ -14,7 +14,6 @@ import android.graphics.Rect;
 import android.graphics.drawable.BitmapDrawable;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.ViewGroup;
@@ -156,11 +155,10 @@ public class FloatingMenuView extends FrameLayout {
         int currentPoxY = (int) ev.getY();
         switch (ev.getAction()) {
             case MotionEvent.ACTION_DOWN:
-                if (showMenu) {
-                    showMenu = !showMenu;
-                    openOrCloseMenu(0, 1);
-                    break;
-                }
+                //                if (showMenu) {
+                //                    showMenu = !showMenu;
+                //                    openOrCloseMenu(0, 1);
+                //                }
 
                 if (rectHome.contains(currentPosX, currentPoxY)) {
                     lastPosX = currentPosX;
@@ -252,7 +250,6 @@ public class FloatingMenuView extends FrameLayout {
             pathMeasure.setPath(path, false);
             pathMeasure.getPosTan(pathMeasure.getLength() * ratio, pos, null);
             canvas.drawCircle(pos[0], pos[1], itemRadius, mPaint);
-            Log.e(TAG, "pos=" + i + " / ratio = " + ratio + " / x = " + pos[0] + " / y =" + pos[1] + " / length " + pathMeasure.getLength() * ratio);
         }
     }
 
@@ -290,6 +287,7 @@ public class FloatingMenuView extends FrameLayout {
                 itemLists.get(i).setPos(itemPosX, itemPosY);
                 itemLists.get(i).getRect().set((int) (itemPosX - itemRadius), (int) (itemPosY - itemRadius), (int) (itemPosX + itemRadius), (int) (itemPosY +
                         itemPosY));
+                itemLists.get(i).setIndex(i);
             }
         } else if (getVerticalPos() == POS_TOP && getHorizontalPos() == POS_RIGHT) {
             //右上位置
@@ -301,6 +299,7 @@ public class FloatingMenuView extends FrameLayout {
                 itemLists.get(i).setPos(itemPosX, itemPosY);
                 itemLists.get(i).getRect().set((int) (itemPosX - itemRadius), (int) (itemPosY - itemRadius), (int) (itemPosX + itemRadius), (int) (itemPosY +
                         itemPosY));
+                itemLists.get(i).setIndex(i);
             }
         } else if (getVerticalPos() == POS_BOTTOM && getHorizontalPos() == POS_RIGHT) {
             //右下位置
@@ -312,6 +311,7 @@ public class FloatingMenuView extends FrameLayout {
                 itemLists.get(i).setPos(itemPosX, itemPosY);
                 itemLists.get(i).getRect().set((int) (itemPosX - itemRadius), (int) (itemPosY - itemRadius), (int) (itemPosX + itemRadius), (int) (itemPosY +
                         itemPosY));
+                itemLists.get(i).setIndex(i);
             }
         } else {
             //左下位置
@@ -324,6 +324,7 @@ public class FloatingMenuView extends FrameLayout {
                 itemLists.get(i).setPos(itemPosX, itemPosY);
                 itemLists.get(i).getRect().set((int) (itemPosX - itemRadius), (int) (itemPosY - itemRadius), (int) (itemPosX + itemRadius), (int) (itemPosY +
                         itemPosY));
+                itemLists.get(i).setIndex(i);
             }
         }
     }
@@ -460,10 +461,6 @@ public class FloatingMenuView extends FrameLayout {
      * 打开或关闭菜单
      */
     private void openOrCloseMenu(float... values) {
-        //        if ((lastVerticalPosition != currentVerticalPosition) || (lastHorizontalPosition != currentHorizontalPosition)) {
-        //如果位置发生过变化 重新获取item的各类信息
-        resolveItems();
-        //        }
 
         if (itemAnimator == null) {
             itemAnimator = new ValueAnimator();
@@ -500,6 +497,7 @@ public class FloatingMenuView extends FrameLayout {
         private float posX;
         private float posY;
         private Rect  rect;
+        private int   index;
 
         public ItemInfo() {
             rect = new Rect();
@@ -532,6 +530,14 @@ public class FloatingMenuView extends FrameLayout {
 
         public void setRect(Rect rect) {
             this.rect = rect;
+        }
+
+        public int getIndex() {
+            return index;
+        }
+
+        public void setIndex(int index) {
+            this.index = index;
         }
     }
 }
