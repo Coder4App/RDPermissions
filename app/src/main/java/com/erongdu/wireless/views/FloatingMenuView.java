@@ -6,7 +6,10 @@ import android.animation.ValueAnimator;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.Path;
+import android.graphics.PathMeasure;
 import android.graphics.Rect;
 import android.graphics.drawable.BitmapDrawable;
 import android.support.annotation.Nullable;
@@ -28,6 +31,7 @@ import com.erongdu.wireless.permissions.R;
  */
 public class FloatingMenuView extends FrameLayout {
     private static final String TAG        = "FloatingMenuView";
+    //弧度制时用到 PI = 180度
     private final        double PI         = Math.PI;
     //左边
     private static final int    POS_LEFT   = 0;
@@ -59,6 +63,8 @@ public class FloatingMenuView extends FrameLayout {
     private int             mWidth;
     //子菜单半径
     private int             itemRadius;
+    //主按钮半径
+    private int             homeDrawableRadius;
     //主菜单和子菜单之间的间距
     private float           offsetToHome;
     //主菜单的内边距
@@ -66,11 +72,19 @@ public class FloatingMenuView extends FrameLayout {
     //主菜单绘制的边框
     private Rect            rectHome;
     //主菜单动画
-    private ValueAnimator   valueAnimator;
+    private ValueAnimator   homeAnimator;
+    //item动画
+    private ValueAnimator   itemAnimator;
     //手势监听类
     private GestureDetector gestureDetector;
     //是否显示菜单
     private boolean         showMenu;
+    //用户获取坐标的工具类
+    private PathMeasure     pathMeasure;
+    //绘制路径时的path
+    private Path            path;
+    //item动画的比率
+    private float           ratio;
 
     public FloatingMenuView(Context context) {
         this(context, null);
@@ -89,14 +103,17 @@ public class FloatingMenuView extends FrameLayout {
         TypedArray ta = context.obtainStyledAttributes(attrs, R.styleable.FloatingMenuView);
         if (ta != null) {
             homeDrawable = (BitmapDrawable) ta.getDrawable(R.styleable.FloatingMenuView_FMhomeImageRes);
-            offsetToHome = ta.getDimensionPixelOffset(R.styleable.FloatingMenuView_FMoffsetTohome, 30);
-            itemRadius = ta.getDimensionPixelOffset(R.styleable.FloatingMenuView_FMitemRadius, 20);
+            offsetToHome = ta.getDimensionPixelOffset(R.styleable.FloatingMenuView_FMoffsetTohome, 40);
+            itemRadius = ta.getDimensionPixelOffset(R.styleable.FloatingMenuView_FMitemRadius, 50);
             innerPadding = ta.getDimensionPixelOffset(R.styleable.FloatingMenuView_FMinnerPadding, 10);
         }
         ta.recycle();
 
         gestureDetector = new GestureDetector(context, gestureListener);
         rectHome = new Rect();
+        pathMeasure = new PathMeasure();
+        path = new Path();
+        showMenu = false;
     }
 
     @Override
@@ -118,10 +135,10 @@ public class FloatingMenuView extends FrameLayout {
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-
         drawHomeDrawable(canvas);
-
-        //        canvas.drawBitmap(menuDrawable.getBitmap(), getPaddingLeft(), getPaddingTop(), mPaint);
+        if (showMenu) {
+            drawItem(canvas);
+        }
     }
 
     //上一次点击的x轴
@@ -204,6 +221,76 @@ public class FloatingMenuView extends FrameLayout {
         canvas.drawBitmap(homeDrawable.getBitmap(), null, rectHome, mPaint);
     }
 
+    //存贮 x,y坐标
+    float[] pos = new float[2];
+
+    /**
+     * 绘制子菜单
+     */
+    private void drawItem(Canvas canvas) {
+        //测试阶段用number暂时代替
+        int number = 4;
+        //弧度制
+        double perAngle = (PI / 2 / number) / 2;
+        //坐标位置
+        float homePosX, homePosY, itemPosX, itemPosY;
+
+        if (getVerticalPos() == POS_TOP && getHorizontalPos() == POS_LEFT) {
+            //左上位置
+            homePosX = innerPadding + homeDrawableRadius;
+            homePosY = innerPadding + homeDrawableRadius;
+            for (int i = 0; i < number; i++) {
+                itemPosX = (float) ((mHeight - itemRadius) * Math.sin((2 * i + 1) * perAngle));
+                itemPosY = (float) ((mWidth - itemRadius) * Math.cos((2 * i + 1) * perAngle));
+
+                drawItems(canvas, homePosX, homePosY, itemPosX, itemPosY);
+            }
+        } else if (getVerticalPos() == POS_TOP && getHorizontalPos() == POS_RIGHT) {
+            //右上位置
+            homePosX = mWidth - (innerPadding + homeDrawableRadius);
+            homePosY = innerPadding + homeDrawableRadius;
+            for (int i = 0; i < number; i++) {
+                itemPosX = (float) (mWidth - (mWidth - itemRadius) * Math.cos((2 * i + 1) * perAngle));
+                itemPosY = (float) ((mHeight - itemRadius) * Math.sin((2 * i + 1) * perAngle));
+
+                drawItems(canvas, homePosX, homePosY, itemPosX, itemPosY);
+            }
+        } else if (getVerticalPos() == POS_BOTTOM && getHorizontalPos() == POS_RIGHT) {
+            //右下位置
+            homePosX = mWidth - (innerPadding + homeDrawableRadius);
+            homePosY = mHeight - (innerPadding + homeDrawableRadius);
+            for (int i = 0; i < number; i++) {
+                itemPosY = (float) (mHeight - (mWidth - itemRadius) * Math.cos((2 * i + 1) * perAngle));
+                itemPosX = (float) (mWidth - (mHeight - itemRadius) * Math.sin((2 * i + 1) * perAngle));
+                drawItems(canvas, homePosX, homePosY, itemPosX, itemPosY);
+            }
+        } else {
+            //左下位置
+            homePosX = innerPadding + homeDrawableRadius;
+            homePosY = mHeight - innerPadding - homeDrawableRadius;
+
+            for (int i = 0; i < number; i++) {
+                itemPosX = (float) ((mWidth - itemRadius) * Math.cos((2 * i + 1) * perAngle));
+                itemPosY = (float) (mHeight - (mHeight - itemRadius) * Math.sin((2 * i + 1) * perAngle));
+
+                drawItems(canvas, homePosX, homePosY, itemPosX, itemPosY);
+            }
+        }
+    }
+
+    private void drawItems(Canvas canvas, float homePosX, float homePosY, float itemPosX, float itemPosY) {
+        path.reset();
+        path.moveTo(homePosX, homePosY);
+        path.lineTo(itemPosX, itemPosY);
+        path.close();
+
+        pathMeasure.setPath(path, true);
+        pathMeasure.getPosTan(pathMeasure.getLength() * ratio, pos, null);
+        canvas.drawCircle(pos[0], pos[1], itemRadius, mPaint);
+
+        Log.e(TAG, "ratio = " + ratio + " / x = " + pos[0] + " / y =" + pos[1] + " / length " + pathMeasure.getLength());
+    }
+
     /**
      * 手势类型监听类
      */
@@ -220,7 +307,8 @@ public class FloatingMenuView extends FrameLayout {
 
         @Override
         public boolean onSingleTapUp(MotionEvent e) {
-            Log.i(TAG, "onSingleTapUp");
+            showMenu = !showMenu;
+            openOrCloseMenu(0, 1);
             return false;
         }
 
@@ -283,11 +371,11 @@ public class FloatingMenuView extends FrameLayout {
 
         resolveHorizontalPos();
 
-        if (valueAnimator == null) {
-            valueAnimator = new ValueAnimator();
+        if (homeAnimator == null) {
+            homeAnimator = new ValueAnimator();
         } else {
-            valueAnimator.removeAllUpdateListeners();
-            valueAnimator.removeAllListeners();
+            homeAnimator.removeAllUpdateListeners();
+            homeAnimator.removeAllListeners();
         }
 
         float       distance;
@@ -300,8 +388,8 @@ public class FloatingMenuView extends FrameLayout {
             startPosValue = getRight();
         }
 
-        valueAnimator.setFloatValues(0, distance);
-        valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+        homeAnimator.setFloatValues(0, distance);
+        homeAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
                 float value = (float) animation.getAnimatedValue();
@@ -314,10 +402,10 @@ public class FloatingMenuView extends FrameLayout {
             }
         });
 
-        valueAnimator.addListener(new AnimatorListenerAdapter() {
+        homeAnimator.addListener(new AnimatorListenerAdapter() {
             @Override
             public void onAnimationEnd(Animator animation) {
-                lastVerticalPosition = getVerticalPos();
+                currentVerticalPosition = getVerticalPos();
                 if ((lastVerticalPosition != currentVerticalPosition) || (lastHorizontalPosition != currentHorizontalPosition)) {
                     invalidate();
                 }
@@ -326,14 +414,42 @@ public class FloatingMenuView extends FrameLayout {
             }
         });
 
-        valueAnimator.start();
+        homeAnimator.start();
+    }
+
+    /**
+     * 打开或关闭菜单
+     */
+    private void openOrCloseMenu(float... values) {
+        mPaint.reset();
+        mPaint.setStyle(Paint.Style.FILL);
+        mPaint.setColor(Color.parseColor("#FF4081"));
+        mPaint.setStrokeWidth(1);
+
+        if (itemAnimator == null) {
+            itemAnimator = new ValueAnimator();
+        } else {
+            itemAnimator.removeAllUpdateListeners();
+        }
+
+        itemAnimator.setFloatValues(values);
+        itemAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                ratio = (float) animation.getAnimatedValue();
+                invalidate();
+            }
+        });
+
+        itemAnimator.start();
     }
 
     /**
      * 获取控件的宽高
      */
     private int getWidthAndHeight() {
-        float homeDrawableRadius = Math.max(homeDrawable.getIntrinsicHeight(), homeDrawable.getIntrinsicWidth()) / 2;
+        //已左下角为基准 计算长宽
+        homeDrawableRadius = Math.max(homeDrawable.getIntrinsicHeight(), homeDrawable.getIntrinsicWidth()) / 2;
         return (int) (Math.floor((innerPadding + homeDrawableRadius) / Math.sin(PI / 4) + homeDrawableRadius + offsetToHome + 2 * itemRadius));
     }
 }
