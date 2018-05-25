@@ -41,10 +41,10 @@ public class RDPermissions {
 
         baseWrapper.analysisPermission(permissions, grantResults);
 
-        if (!Utils.isStringArrayEmpty(baseWrapper.getGrantPermission()) && (baseWrapper.getGrantPermission().length == baseWrapper.getPermissions().length)) {
+        if (baseWrapper.isPermissonGrantAll()) {
             ((PermissionCallBack) proxyObject).permissionGranted(requestCode, baseWrapper.getGrantPermission(), new int[]{0}, target);
-        } else {
-            boolean ShowSystemRationale = baseWrapper.shouldShowRationale(baseWrapper.getDeniedPermissions());
+        } else if (!Utils.isStringArrayEmpty(baseWrapper.getDenyPermission())) {
+            boolean ShowSystemRationale = baseWrapper.shouldShowRationale(baseWrapper.getDenyPermission());
             if (ShowSystemRationale) {
                 baseWrapper.request();
             } else {

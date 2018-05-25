@@ -1,11 +1,11 @@
 package com.erongdu.wireless.permissions.processor;
 
-import com.erongdu.wireless.permissions.processor.utils.Consts;
-import com.erongdu.wireless.permissions.processor.utils.Logger;
-import com.erongdu.wireless.permissions.processor.utils.Utils;
 import com.erongdu.wireless.permissions.annotation.GrantResult;
 import com.erongdu.wireless.permissions.annotation.PMArray;
 import com.erongdu.wireless.permissions.annotation.RequestCode;
+import com.erongdu.wireless.permissions.processor.utils.Consts;
+import com.erongdu.wireless.permissions.processor.utils.Logger;
+import com.erongdu.wireless.permissions.processor.utils.Utils;
 import com.squareup.javapoet.ArrayTypeName;
 import com.squareup.javapoet.TypeName;
 
@@ -30,14 +30,19 @@ public class ProcessInfo {
     private LinkedHashMap<String, Entity> paramsDenyMap;
     /** 存储被PermissionGranted注解的方法的参数信息 */
     private LinkedHashMap<String, Entity> paramsGrantMap;
+    /** 存储被PermissionRationale注解的方法的参数信息 */
+    private LinkedHashMap<String, Entity> paramsRationaleMap;
     /** 被PermissionGranted注解的方法的方法名 */
     private String                        methodGrantName;
     /** 被PermissionDenied注解的方法的方法名 */
     private String                        methodDenyName;
+    /** 被PermissionRationale注解的方法的方法名 */
+    private String                        methodRationaleName;
 
     public ProcessInfo() {
         paramsDenyMap = new LinkedHashMap<>();
         paramsGrantMap = new LinkedHashMap<>();
+        paramsRationaleMap = new LinkedHashMap<>();
     }
 
     /**
@@ -46,9 +51,9 @@ public class ProcessInfo {
     public void resolveGrantMethod(Logger logger, Element element, Elements elementUtils, Types typeUtils) {
 
         logger.info(" >>> Start resolve child element which parent element is annotation by PermissionGranted. <<<");
-//        TypeMirror type_RequestCode = elementUtils.getTypeElement(Consts.ANNOTATION_TYPE_REQUESTCODE).asType();
-//        TypeMirror type_PMArray     = elementUtils.getTypeElement(Consts.ANNOTATION_TYPE_PMARRAY).asType();
-//        TypeMirror type_GrantResult = elementUtils.getTypeElement(Consts.ANNOTATION_TYPE_GRANTREULT).asType();
+        //        TypeMirror type_RequestCode = elementUtils.getTypeElement(Consts.ANNOTATION_TYPE_REQUESTCODE).asType();
+        //        TypeMirror type_PMArray     = elementUtils.getTypeElement(Consts.ANNOTATION_TYPE_PMARRAY).asType();
+        //        TypeMirror type_GrantResult = elementUtils.getTypeElement(Consts.ANNOTATION_TYPE_GRANTREULT).asType();
 
         //获取方法的方法名
         methodGrantName = element.getSimpleName().toString();
@@ -118,6 +123,25 @@ public class ProcessInfo {
         }
     }
 
+    public void resolveRationaleMethod(Logger logger, Element element) {
+        logger.info(" >>> Start resolve child element which parent element is annotation by PermissionRationale. <<<");
+
+        //获取方法的方法名
+        methodRationaleName = element.getSimpleName().toString();
+        //获取该方法下的所有形参
+        List<? extends  VariableElement> parameters = ((ExecutableElement) element).getParameters();
+        if (Utils.isCollectionNotEmpty(parameters)){
+            //遍历所有参数
+            for(Element parameter : parameters){
+                Entity entity = new Entity(parameter);
+                entity.setParameterName(parameter.getSimpleName().toString());
+                entity.setParameterType(parameter.asType().toString());
+                checkAnnotationByLib(parameter,entity);
+                paramsRationaleMap.put(entity.getKeyWord(),entity);
+            }
+        }
+    }
+
     /**
      * 是否被权限库的指定注解 注解
      */
@@ -155,11 +179,19 @@ public class ProcessInfo {
         return paramsGrantMap;
     }
 
+    public LinkedHashMap<String, Entity> getParamsRationaleMap() {
+        return paramsRationaleMap;
+    }
+
     public String getMethodGrantName() {
         return methodGrantName;
     }
 
     public String getMethodDenyName() {
         return methodDenyName;
+    }
+
+    public String getMethodRationaleName() {
+        return methodRationaleName;
     }
 }

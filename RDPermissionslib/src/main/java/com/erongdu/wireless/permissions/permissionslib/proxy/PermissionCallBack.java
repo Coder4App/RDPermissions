@@ -13,4 +13,7 @@ public interface PermissionCallBack {
 
     /** permission denied */
     void permissionDenied(int requestCode, String[] permissions, int[] grantResults, Object proxy);
+
+    /** permission rationale */
+    void permissionRationale(int requestCode, String[] permissions, int[] grantResults, Object proxy);
 }

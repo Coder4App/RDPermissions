@@ -2,6 +2,7 @@ package com.erongdu.wireless.permissions.processor;
 
 import com.erongdu.wireless.permissions.annotation.PermissionDenied;
 import com.erongdu.wireless.permissions.annotation.PermissionGranted;
+import com.erongdu.wireless.permissions.annotation.PermissionRationale;
 import com.erongdu.wireless.permissions.processor.utils.Consts;
 import com.erongdu.wireless.permissions.processor.utils.Logger;
 import com.erongdu.wireless.permissions.processor.utils.Utils;
@@ -83,13 +84,15 @@ public class AnnotationProcessor extends AbstractProcessor {
                 //interface of proxy
                 TypeMirror type_PermissionCallBack = elementUtils.getTypeElement(Consts.INTERFACE_PERMISSIONCALLBACK).asType();
 
-                prasePermissionGrantedMethod(roundEnv);
-                prasePermissionDeniedMethod(roundEnv);
+                parsePermissionGrantedMethod(roundEnv);
+                parsePermissionDeniedMethod(roundEnv);
+                parsePermissionRationaleMethod(roundEnv);
 
                 for (String qualifiedName : map.keySet()) {
                     logger.info(" >>> Generate code " + qualifiedName);
-                    MethodSpec grantMethodSpec = generateGrantMethod(qualifiedName);
-                    MethodSpec denyMethodSpec  = generateDenyMethod(qualifiedName);
+                    MethodSpec grantMethodSpec     = generateGrantMethod(qualifiedName);
+                    MethodSpec denyMethodSpec      = generateDenyMethod(qualifiedName);
+                    MethodSpec rationaleMethodSpec = generateRationaleMethod(qualifiedName);
 
                     // generate java code
                     String generateClassName = qualifiedName.substring(qualifiedName.lastIndexOf(".") + 1, qualifiedName.length()) + Consts.SEPARATOR + "Proxy";
@@ -105,6 +108,11 @@ public class AnnotationProcessor extends AbstractProcessor {
                     if (denyMethodSpec != null) {
                         typeBuilder.addMethod(denyMethodSpec);
                         logger.info(" >>> add method denyMethod");
+                    }
+
+                    if (rationaleMethodSpec != null) {
+                        typeBuilder.addMethod(rationaleMethodSpec);
+                        logger.info(" >>> add method rationaleMethod");
                     }
 
                     JavaFile.builder(Consts.PACKAGE_OF_GENERATE_FILE, typeBuilder.build())
@@ -123,7 +131,7 @@ public class AnnotationProcessor extends AbstractProcessor {
     /**
      * 处理被PermissionGranted注解方法
      */
-    private void prasePermissionGrantedMethod(RoundEnvironment roundEnv) {
+    private void parsePermissionGrantedMethod(RoundEnvironment roundEnv) {
         Set<? extends Element> grantedElements = roundEnv.getElementsAnnotatedWith(PermissionGranted.class);
         if (Utils.isCollectionNotEmpty(grantedElements)) {
             logger.info(" >>> Found annotation PermissionGranted,size is " + grantedElements.size() + " <<<");
@@ -154,7 +162,7 @@ public class AnnotationProcessor extends AbstractProcessor {
     /**
      * 处理被PermissionDenied注解方法
      */
-    private void prasePermissionDeniedMethod(RoundEnvironment roundEnv) {
+    private void parsePermissionDeniedMethod(RoundEnvironment roundEnv) {
         Set<? extends Element> deniedElements = roundEnv.getElementsAnnotatedWith(PermissionDenied.class);
         if (Utils.isCollectionNotEmpty(deniedElements)) {
             logger.info(" >>> Found annotation PermissionDenied,size is " + deniedElements.size() + " <<<");
@@ -179,6 +187,38 @@ public class AnnotationProcessor extends AbstractProcessor {
 
                     //扫描方法参数
                     info.resolveDeniedMethod(logger, element);
+                }
+            }
+        }
+    }
+
+    /**
+     * 处理被PermissionRationale注解方法
+     */
+    private void parsePermissionRationaleMethod(RoundEnvironment roundEnv) {
+        Set<? extends Element> rationaleElements = roundEnv.getElementsAnnotatedWith(PermissionRationale.class);
+        if (Utils.isCollectionNotEmpty(rationaleElements)) {
+            logger.info(" >>> Found annotation PermissionRationale,size is " + rationaleElements.size() + " <<<");
+            for (Element element : rationaleElements) {
+                //PermissionRationale 必须注解在方法上，虽然注解有限定(ElementType.METHOD)，但是这边还是做了一层处理,判断是否注解在方法上
+                if (element.asType().getKind() == TypeKind.EXECUTABLE) {
+                    //获取parent Element
+                    TypeElement parentElement = (TypeElement) element.getEnclosingElement();
+                    String      qualifiedName = parentElement.getQualifiedName().toString();
+
+                    ProcessInfo info = map.get(qualifiedName);
+                    if (info == null) {
+                        info = new ProcessInfo();
+                        map.put(qualifiedName, info);
+                    }
+
+                    if (Utils.isMapNotEmpty(info.getParamsRationaleMap())) {
+                        throw new RuntimeException("RDPermission::Compiler >>> there is already have method which is annotated by @PermissionDenied in " +
+                                qualifiedName);
+                    }
+
+                    //扫描方法参数
+                    info.resolveRationaleMethod(logger, element);
                 }
             }
         }
@@ -281,9 +321,57 @@ public class AnnotationProcessor extends AbstractProcessor {
     }
 
     /**
+     * 生成permissionRationale方法
+     */
+    public MethodSpec generateRationaleMethod(String qualifiedName) {
+        ProcessInfo                   info      = map.get(qualifiedName);
+        LinkedHashMap<String, Entity> paramsMap = info.getParamsRationaleMap();
+
+        /*
+          build input parameter like as
+          Object proxy
+         */
+        ParameterSpec specProxy = ParameterSpec.builder(TypeName.OBJECT, "proxy").build();
+
+        // build method : 'permissionRationale'
+        MethodSpec.Builder rationaleMethodBuilder = buildMethod(Consts.METHOD_PERMISSIONRATIONALE, paramsMap)
+                .addParameter(specProxy)
+                .addAnnotation(Override.class);
+
+        StringBuilder argsStrings = new StringBuilder();
+        String        packageName = qualifiedName.substring(0, qualifiedName.lastIndexOf("."));
+        String        className   = qualifiedName.substring(qualifiedName.lastIndexOf(".") + 1, qualifiedName.length());
+
+        if (paramsMap.isEmpty() && Utils.isStringNotEmpty(info.getMethodRationaleName())) {
+            return rationaleMethodBuilder.addStatement("(($T)proxy)." + info.getMethodRationaleName() + "()", ClassName.get(packageName, className)).build();
+        } else if (paramsMap.isEmpty() && Utils.isStringEmpty(info.getMethodRationaleName())) {
+            return rationaleMethodBuilder.build();
+        } else {
+            for (String key : paramsMap.keySet()) {
+                Entity entity = paramsMap.get(key);
+                if (entity.isPMLibAnnotation()) {
+                    logger.info(" >>> " + qualifiedName + " / " + "permissionRationale"
+                            + "\n " + entity.getParameterName()
+                            + "\n " + entity.getParameterType()
+                            + " <<<");
+
+                    argsStrings.append(entity.getParameterName()).append(",");
+                } else {
+                    argsStrings.append(entity.getDefaultValus()).append(",");
+                }
+            }
+
+            return rationaleMethodBuilder.addStatement("(($T)proxy)."
+                    + info.getMethodRationaleName()
+                    + "(" + argsStrings.toString().substring(0, argsStrings.length() - 1) + ")", ClassName.get(packageName, className))
+                    .build();
+        }
+    }
+
+    /**
      * 构建方法
      * e.g
-     * public void permissionGranted(Object proxy,int requestCode, String[] permissions, int[] grantResults)
+     * public void permissionGranted(int requestCode, String[] permissions, int[] grantResults,Object proxy)
      */
     private MethodSpec.Builder buildMethod(String methodName, LinkedHashMap<String, Entity> map) {
         // build method

@@ -7,6 +7,7 @@ import android.text.TextUtils;
 import android.util.Log;
 
 import com.erongdu.wireless.permissions.permissionslib.utils.PMConstant;
+import com.erongdu.wireless.permissions.permissionslib.utils.Utils;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
@@ -70,10 +71,10 @@ public abstract class BaseWrapper implements Wrapper {
         }
     }
 
-    //************************************/
+    //****************** 自定义方法区 ******************/
 
     /** 获取未获得权限的列表 */
-    public String[] getDeniedPermissions() {
+    public String[] resloveDeniedPermissions() {
         List<String> deniedList = new ArrayList<>(1);
         for (String permission : permissions) {
             if (ContextCompat.checkSelfPermission(getActivity(), permission) != PackageManager.PERMISSION_GRANTED) {
@@ -140,7 +141,17 @@ public abstract class BaseWrapper implements Wrapper {
         }
     }
 
-    //***********************************/
+    /**
+     * 判断权限是否全部grant
+     */
+    public boolean isPermissonGrantAll() {
+        if (Utils.isStringArrayEmpty(grantPermission)) {
+            return false;
+        }
+        return permissions.length == grantPermission.length;
+    }
+
+    //***************** get方法区 ******************/
 
     public String[] getPermissions() {
         return permissions;
@@ -158,6 +169,7 @@ public abstract class BaseWrapper implements Wrapper {
         return denyPermission;
     }
 
+    //***********************************/
     public class CacheWrapper {
         private WeakReference              requestResultProxy;
         private WeakReference              target;

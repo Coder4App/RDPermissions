@@ -42,6 +42,7 @@ public class Consts {
     //method name
     public static final  String METHOD_PERMISSIONGRANTED          = "permissionGranted";
     public static final  String METHOD_PERMISSIONDENIED           = "permissionDenied";
+    public static final  String METHOD_PERMISSIONRATIONALE           = "permissionRationale";
     // Java type
     private static final String LANG                              = "java.lang";
     public static final  String BYTE                              = LANG + ".Byte";

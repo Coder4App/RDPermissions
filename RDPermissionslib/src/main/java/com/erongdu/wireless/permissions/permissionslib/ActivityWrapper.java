@@ -2,7 +2,6 @@ package com.erongdu.wireless.permissions.permissionslib;
 
 import android.app.Activity;
 import android.support.v4.app.ActivityCompat;
-import android.util.Log;
 
 import com.erongdu.wireless.permissions.permissionslib.wrapper.BaseWrapper;
 
@@ -28,21 +27,6 @@ public class ActivityWrapper extends BaseWrapper {
     @Override
     public void request() {
         super.request();
-//        String[] deniedList = getDeniedPermissions();
-//        if (deniedList.length != 0) {
-//            if (shouldShowRationale(deniedList)) {
-//                //                ActivityCompat.OnRequestPermissionsResultCallback onRequestPermissionsResultCallback = (ActivityCompat
-//                // .OnRequestPermissionsResultCallback)
-//                // Proxy.newProxyInstance(activity.getClassLoader(), new Class[]{ActivityCompat.OnRequestPermissionsResultCallback.class}, new
-//                //                        RequestPemissionResultProxy(getActivity()));
-//                Log.i(TAG, "shouldShowRationale true");
-//                ActivityCompat.requestPermissions(getActivity(), deniedList, getRequestCode());
-//            } else {
-//
-//                Log.i(TAG, "shouldShowRationale false");
-//                ActivityCompat.requestPermissions(getActivity(), deniedList, getRequestCode());
-//            }
-//        }
         ActivityCompat.requestPermissions(getActivity(), getPermissions(), getRequestCode());
     }
 }
