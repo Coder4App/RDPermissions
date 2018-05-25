@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<layout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
+<layout xmlns:android="http://schemas.android.com/apk/res/android">
 
     <data>
 
@@ -18,7 +17,6 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="#998877"
             android:orientation="horizontal">
 
             <Button
@@ -36,32 +34,32 @@
                 android:text="requsetPermissions" />
         </LinearLayout>
 
-        <RelativeLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:clipChildren="false">
+        <!--<RelativeLayout-->
+        <!--android:layout_width="match_parent"-->
+        <!--android:layout_height="match_parent"-->
+        <!--android:clipChildren="false">-->
 
-            <android.support.v7.widget.RecyclerView
-                android:id="@+id/main_recycle"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                app:recyclerAdapter="@{viewCtrl.adapter}" />
+        <!--<android.support.v7.widget.RecyclerView-->
+        <!--android:id="@+id/main_recycle"-->
+        <!--android:layout_width="match_parent"-->
+        <!--android:layout_height="match_parent"-->
+        <!--app:recyclerAdapter="@{viewCtrl.adapter}" />-->
 
-            <com.erongdu.wireless.views.WaveSideBarView
-                android:layout_width="40dp"
-                android:layout_height="match_parent"
-                android:layout_alignParentRight="true"
-                app:sidebarRadius="30dp"
-                app:sidebarTextSize="14sp" />
+        <!--<com.erongdu.wireless.views.WaveSideBarView-->
+        <!--android:layout_width="40dp"-->
+        <!--android:layout_height="match_parent"-->
+        <!--android:layout_alignParentRight="true"-->
+        <!--app:sidebarRadius="30dp"-->
+        <!--app:sidebarTextSize="14sp" />-->
 
-            <com.erongdu.wireless.views.FloatingMenuView
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_alignParentBottom="true"
-                android:background="@color/colorPrimary"
-                android:paddingLeft="10dp"
-                android:paddingTop="10dp"
-                app:FMhomeImageRes="@drawable/login_pic_gesture_head" />
-        </RelativeLayout>
+        <!--<com.erongdu.wireless.views.FloatingMenuView-->
+        <!--android:layout_width="match_parent"-->
+        <!--android:layout_height="match_parent"-->
+        <!--android:layout_alignParentBottom="true"-->
+        <!--android:background="@color/colorPrimary"-->
+        <!--android:paddingLeft="10dp"-->
+        <!--android:paddingTop="10dp"-->
+        <!--app:FMhomeImageRes="@drawable/login_pic_gesture_head" />-->
+        <!--</RelativeLayout>-->
     </LinearLayout>
 </layout>

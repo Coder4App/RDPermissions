@@ -24,7 +24,10 @@ public interface Wrapper {
      */
     Wrapper requestWithRationale();
 
-    Wrapper requestProxyObject(Object requestProxyObject);
+    /**
+     *
+     */
+    Wrapper requestTargetObject(Object requestTargetObject);
 
     void request();
 }

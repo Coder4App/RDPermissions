@@ -22,12 +22,12 @@ import java.util.Map;
  * Description:
  */
 public abstract class BaseWrapper implements Wrapper {
-    private static final String PERMISSIONS_PROXY = "$$Proxy";
-    public static final  String TAG               = "RDpermissionBaseWrapper";
+    private static final String                                    PERMISSIONS_PROXY = "$$Proxy";
+    public static final  Map<Integer, WeakReference<CacheWrapper>> cacheMap          = new HashMap<>();
+    public static final  String                                    TAG               = "RDpermissionBaseWrapper";
     private String[] permissions;
     private boolean  requestWithRationale;
     private int      requestCode;
-    public static final Map<Integer, WeakReference<CacheWrapper>> cacheMap = new HashMap<>();
     //
     private String[] grantPermission;
     private String[] denyPermission;
@@ -51,12 +51,12 @@ public abstract class BaseWrapper implements Wrapper {
     }
 
     @Override
-    public Wrapper requestProxyObject(Object requestProxyObject) {
+    public Wrapper requestTargetObject(Object requestTargetObject) {
 
         if (!cacheMap.containsKey(getActivity().hashCode())) {
             cacheMap.put(getActivity().hashCode(),
                     new WeakReference(
-                            new CacheWrapper(getProxy(requestProxyObject.getClass().getSimpleName()), requestProxyObject,this)));
+                            new CacheWrapper(getProxy(requestTargetObject.getClass().getSimpleName()), requestTargetObject, this)));
             return this;
         }
 
@@ -73,7 +73,7 @@ public abstract class BaseWrapper implements Wrapper {
     //************************************/
 
     /** 获取未获得权限的列表 */
-    public String[] getDeniedPermissions(String... permissions) {
+    public String[] getDeniedPermissions() {
         List<String> deniedList = new ArrayList<>(1);
         for (String permission : permissions) {
             if (ContextCompat.checkSelfPermission(getActivity(), permission) != PackageManager.PERMISSION_GRANTED) {
@@ -99,7 +99,6 @@ public abstract class BaseWrapper implements Wrapper {
         return false;
     }
 
-
     /** 反射获取apt生成的类 */
     public Object getProxy(String className) {
         String proxyName = PMConstant.packageName + "." + className + PERMISSIONS_PROXY;
@@ -119,7 +118,6 @@ public abstract class BaseWrapper implements Wrapper {
 
     /**
      * 分析权限授权结果
-     *
      */
     public void analysisPermission(String[] permissions, int[] grantResults) {
         StringBuffer grantSB = new StringBuffer();
@@ -174,7 +172,7 @@ public abstract class BaseWrapper implements Wrapper {
             this.target = new WeakReference(target);
         }
 
-        public CacheWrapper(Object requestResultProxy, Object target , BaseWrapper wapper) {
+        public CacheWrapper(Object requestResultProxy, Object target, BaseWrapper wapper) {
             this.requestResultProxy = new WeakReference(requestResultProxy);
             this.target = new WeakReference(target);
             this.wapper = new WeakReference(wapper);

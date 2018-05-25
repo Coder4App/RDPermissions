@@ -4,6 +4,7 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.View;
 
 import com.erongdu.wireless.permissions.R;
@@ -47,6 +48,7 @@ public class StickyItemDecoration extends RecyclerView.ItemDecoration {
     @Override
     public void onDrawOver(Canvas c, RecyclerView parent, RecyclerView.State state) {
         super.onDrawOver(c, parent, state);
+        Log.d(TAG_HOVERITEMDECORATION,"number" + parent.getChildCount() +"/" +parent.getAdapter().getItemCount() );
         int    childCount       = parent.getChildCount();
         int    left             = parent.getLeft() + parent.getPaddingLeft();
         int    right            = parent.getRight() - parent.getPaddingRight();
