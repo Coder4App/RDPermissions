@@ -1,6 +1,7 @@
 package com.erongdu.wireless.permissions.permissionslib;
 
 import android.app.Activity;
+import android.app.Fragment;
 import android.content.DialogInterface;
 import android.support.v7.app.AlertDialog;
 
@@ -22,21 +23,28 @@ public class RDPermissions {
         return new ActivityWrapper(activity);
     }
 
-    public static void onRequestPermissionsResult(Activity activity, int requestCode, String[] permissions, int[] grantResults) {
-        onPrivateRequestPermissionsResult(activity, requestCode, permissions, grantResults);
+    public static Wrapper get(Fragment fragment) {
+        return new FragmentWrapper(fragment);
     }
 
-    private static void onPrivateRequestPermissionsResult(final Activity activity, int requestCode, String[] permissions, int[] grantResults) {
-        int key = activity.hashCode();
+    public static Wrapper get(android.support.v4.app.Fragment supperFragment) {
+        return new SupperFragmentWrapper(supperFragment);
+    }
 
-        Object o = BaseWrapper.cacheMap.get(key);
+    public static void onRequestPermissionsResult(Object context, int requestCode, String[] permissions, int[] grantResults) {
+        onPrivateRequestPermissionsResult(context, requestCode, permissions, grantResults);
+    }
+
+    private static void onPrivateRequestPermissionsResult(Object context, int requestCode, String[] permissions, int[] grantResults) {
+        int key = context.hashCode();
+
         if (BaseWrapper.cacheMap.get(key) == null) {
             return;
         }
 
-        Object      proxyObject = BaseWrapper.cacheMap.get(key).getRequestResultProxy();
-        Object      target      = BaseWrapper.cacheMap.get(key).getTarget().get();
-        BaseWrapper baseWrapper = BaseWrapper.cacheMap.get(key).getWapper().get();
+        Object            proxyObject = BaseWrapper.cacheMap.get(key).getRequestResultProxy();
+        Object            target      = BaseWrapper.cacheMap.get(key).getTarget().get();
+        final BaseWrapper baseWrapper = BaseWrapper.cacheMap.get(key).getWapper().get();
 
         // 判断代理类 委托类(目标类) 是否存在
         if (proxyObject == null || target == null || baseWrapper == null) {
@@ -53,12 +61,12 @@ public class RDPermissions {
             if (!showSystemRationale && baseWrapper.isRequestWithCustomRationale()) {
                 ((PermissionCallBack) proxyObject).permissionRationale(requestCode, baseWrapper.getDenyPermission(), new int[]{-1}, target);
             } else if (!showSystemRationale && baseWrapper.isRequestWithRationale()) {
-                new AlertDialog.Builder(activity)
+                new AlertDialog.Builder(baseWrapper.getActivity())
                         .setMessage("我们需要您开启权限\n请点击前往设置页面")
                         .setPositiveButton("确定", new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
-                                activity.startActivity(ManufacturerUtils.getManufacturerManager(activity.getPackageName()));
+                                baseWrapper.getActivity().startActivity(ManufacturerUtils.getManufacturerManager(baseWrapper.getActivity().getPackageName()));
                             }
                         })
                         .setNegativeButton("取消", new DialogInterface.OnClickListener() {

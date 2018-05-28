@@ -9,7 +9,6 @@ import android.util.Log;
 import com.erongdu.wireless.permissions.permissionslib.utils.PMConstant;
 import com.erongdu.wireless.permissions.permissionslib.utils.Utils;
 
-import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -61,9 +60,9 @@ public abstract class BaseWrapper implements Wrapper {
 
     @Override
     public Wrapper requestTargetObject(Object requestTargetObject) {
-        Log.i(TAG, "before code " + getActivity().hashCode());
-        if (!cacheMap.containsKey(getActivity().hashCode())) {
-            cacheMap.put(getActivity().hashCode(),
+        Log.i(TAG, "before code " + getContext().hashCode());
+        if (!cacheMap.containsKey(getContext().hashCode())) {
+            cacheMap.put(getContext().hashCode(),
                     new CacheWrapper(getProxy(requestTargetObject.getClass().getSimpleName()), requestTargetObject, this));
             return this;
         }
@@ -73,8 +72,8 @@ public abstract class BaseWrapper implements Wrapper {
 
     @Override
     public void request() {
-        if (!cacheMap.containsKey(getActivity().hashCode())) {
-            cacheMap.put(getActivity().hashCode(), new CacheWrapper(this));
+        if (!cacheMap.containsKey(getContext().hashCode())) {
+            cacheMap.put(getContext().hashCode(), new CacheWrapper(this));
         }
     }
 
@@ -186,7 +185,7 @@ public abstract class BaseWrapper implements Wrapper {
 
     //***********************************/
     public class CacheWrapper {
-        private Object              requestResultProxy;
+        private Object                     requestResultProxy;
         private WeakReference              target;
         private WeakReference<BaseWrapper> wapper;
 

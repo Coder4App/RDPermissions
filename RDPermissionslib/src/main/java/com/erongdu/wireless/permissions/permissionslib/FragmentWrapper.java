@@ -1,43 +1,44 @@
 package com.erongdu.wireless.permissions.permissionslib;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.support.v4.app.ActivityCompat;
+import android.app.Fragment;
 
 import com.erongdu.wireless.permissions.permissionslib.wrapper.BaseWrapper;
 
 /**
  * Author: chenwei
  * E-mail: cw@erongdu.com
- * Date: 2017/12/22 下午5:10
+ * Date: 2018/5/28 下午5:01
  * <p>
  * Description:
  */
-public class ActivityWrapper extends BaseWrapper {
-    private Activity activity;
+public class FragmentWrapper extends BaseWrapper {
+    private Fragment fragment;
 
-    public ActivityWrapper(Activity activity) {
-        this.activity = activity;
+    public FragmentWrapper(Fragment fragment) {
+        this.fragment = fragment;
     }
 
     @Override
     public Activity getActivity() {
-        return activity;
+        return fragment.getActivity();
     }
 
     @Override
     public Object getContext() {
-        return activity;
+        return fragment;
     }
 
+    @SuppressLint("NewApi")
     @Override
     public void request() {
         super.request();
-
         if (shouldShowRationale(getPermissions())) {
-            ActivityCompat.requestPermissions(getActivity(), getPermissions(), getRequestCode());
+            fragment.requestPermissions(getPermissions(), getRequestCode());
         } else {
             //第一申请权限 shouldShowRationale 默认都是false 所以添加这个
-            ActivityCompat.requestPermissions(getActivity(), getPermissions(), getRequestCode());
+            fragment.requestPermissions(getPermissions(), getRequestCode());
         }
     }
 }

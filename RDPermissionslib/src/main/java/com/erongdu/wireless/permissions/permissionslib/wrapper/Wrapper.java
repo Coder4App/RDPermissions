@@ -12,6 +12,8 @@ import android.app.Activity;
 public interface Wrapper {
     Activity getActivity();
 
+    Object getContext();
+
     Wrapper requestCode(int requestCode);
 
     /**

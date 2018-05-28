@@ -10,7 +10,8 @@ import android.Manifest;
  * Description:
  */
 public class PMConstant {
-    public  static final String packageName = "com.erongdu.wireless.permissions";
+    public static final String PACK_TAG    = "package";
+    public static final String packageName = "com.erongdu.wireless.permissions";
     public static final String[] CAMERA;
 
     static {

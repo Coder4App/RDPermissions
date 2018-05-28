@@ -119,6 +119,11 @@ public class MainCtrl extends BaseRecycleCtrl {
         ActivityManage.peek().startActivity(intent);
     }
 
+    public void jumpFragment(View view) {
+        Intent intent = new Intent(ActivityManage.peek(), FragmentAct.class);
+        ActivityManage.peek().startActivity(intent);
+    }
+
     /** 日历查询 */
     @SuppressLint("MissingPermission")
     private void calendar() {
@@ -168,9 +173,9 @@ public class MainCtrl extends BaseRecycleCtrl {
     public void permissionsGrant(@RequestCode int requestCode, String stringType, @PMArray String[] permissions, int intType,
                                  long longType, float floatType, double doubleType, @GrantResult int[] grantResults, boolean booleanType) {
         Toast.makeText(ActivityManage.peek(), "permissionsGrant " + permissions[0], Toast.LENGTH_LONG).show();
-                WandRPermission();
-//                calendar();
-//                        camera();
+        WandRPermission();
+        //                calendar();
+        //                        camera();
     }
 
     @PermissionDenied
