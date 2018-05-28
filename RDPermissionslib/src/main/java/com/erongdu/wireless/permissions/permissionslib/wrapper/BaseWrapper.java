@@ -9,6 +9,7 @@ import android.util.Log;
 import com.erongdu.wireless.permissions.permissionslib.utils.PMConstant;
 import com.erongdu.wireless.permissions.permissionslib.utils.Utils;
 
+import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -23,10 +24,11 @@ import java.util.Map;
  * Description:
  */
 public abstract class BaseWrapper implements Wrapper {
-    private static final String                                    PERMISSIONS_PROXY = "$$Proxy";
-    public static final  Map<Integer, WeakReference<CacheWrapper>> cacheMap          = new HashMap<>();
-    public static final  String                                    TAG               = "RDpermissionBaseWrapper";
+    private static final String                     PERMISSIONS_PROXY = "$$Proxy";
+    public static final  Map<Integer, CacheWrapper> cacheMap          = new HashMap<>();
+    public static final  String                     TAG               = "RDpermissionBaseWrapper";
     private String[] permissions;
+    private boolean  requestWithCustomRationale;
     private boolean  requestWithRationale;
     private int      requestCode;
     //
@@ -36,6 +38,12 @@ public abstract class BaseWrapper implements Wrapper {
     @Override
     public Wrapper requestPermission(String... permissions) {
         this.permissions = permissions;
+        return this;
+    }
+
+    @Override
+    public Wrapper requestWithCustomRationale() {
+        this.requestWithCustomRationale = true;
         return this;
     }
 
@@ -53,11 +61,10 @@ public abstract class BaseWrapper implements Wrapper {
 
     @Override
     public Wrapper requestTargetObject(Object requestTargetObject) {
-
+        Log.i(TAG, "before code " + getActivity().hashCode());
         if (!cacheMap.containsKey(getActivity().hashCode())) {
             cacheMap.put(getActivity().hashCode(),
-                    new WeakReference(
-                            new CacheWrapper(getProxy(requestTargetObject.getClass().getSimpleName()), requestTargetObject, this)));
+                    new CacheWrapper(getProxy(requestTargetObject.getClass().getSimpleName()), requestTargetObject, this));
             return this;
         }
 
@@ -67,7 +74,7 @@ public abstract class BaseWrapper implements Wrapper {
     @Override
     public void request() {
         if (!cacheMap.containsKey(getActivity().hashCode())) {
-            cacheMap.put(getActivity().hashCode(), new WeakReference(new CacheWrapper(this)));
+            cacheMap.put(getActivity().hashCode(), new CacheWrapper(this));
         }
     }
 
@@ -169,9 +176,17 @@ public abstract class BaseWrapper implements Wrapper {
         return denyPermission;
     }
 
+    public boolean isRequestWithCustomRationale() {
+        return requestWithCustomRationale;
+    }
+
+    public boolean isRequestWithRationale() {
+        return requestWithRationale;
+    }
+
     //***********************************/
     public class CacheWrapper {
-        private WeakReference              requestResultProxy;
+        private Object              requestResultProxy;
         private WeakReference              target;
         private WeakReference<BaseWrapper> wapper;
 
@@ -180,22 +195,22 @@ public abstract class BaseWrapper implements Wrapper {
         }
 
         public CacheWrapper(Object requestResultProxy, Object target) {
-            this.requestResultProxy = new WeakReference(requestResultProxy);
+            this.requestResultProxy = requestResultProxy;
             this.target = new WeakReference(target);
         }
 
         public CacheWrapper(Object requestResultProxy, Object target, BaseWrapper wapper) {
-            this.requestResultProxy = new WeakReference(requestResultProxy);
+            this.requestResultProxy = requestResultProxy;
             this.target = new WeakReference(target);
             this.wapper = new WeakReference(wapper);
         }
 
-        public WeakReference getRequestResultProxy() {
+        public Object getRequestResultProxy() {
             return requestResultProxy;
         }
 
         public void setRequestResultProxy(Object requestResultProxy) {
-            this.requestResultProxy = new WeakReference(requestResultProxy);
+            this.requestResultProxy = requestResultProxy;
         }
 
         public WeakReference getTarget() {

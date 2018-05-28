@@ -103,6 +103,7 @@ public class MainCtrl extends BaseRecycleCtrl {
                 .requestPermission(permissions)
                 .requestTargetObject(this)
                 .requestCode(101)
+                .requestWithRationale()
                 .request();
 
         //        Intent intent = new Intent("android.media.action.IMAGE_CAPTURE");
@@ -167,12 +168,15 @@ public class MainCtrl extends BaseRecycleCtrl {
     public void permissionsGrant(@RequestCode int requestCode, String stringType, @PMArray String[] permissions, int intType,
                                  long longType, float floatType, double doubleType, @GrantResult int[] grantResults, boolean booleanType) {
         Toast.makeText(ActivityManage.peek(), "permissionsGrant " + permissions[0], Toast.LENGTH_LONG).show();
+                WandRPermission();
+//                calendar();
+//                        camera();
     }
 
-//    @PermissionDenied
-//    public void permissionsDeny(@RequestCode int requestCode, @PMArray String[] permissions, @GrantResult int[] grantResults) {
-//        Toast.makeText(ActivityManage.peek(), "permissionsDeny " + permissions[0], Toast.LENGTH_LONG).show();
-//    }
+    @PermissionDenied
+    public void permissionsDeny(@RequestCode int requestCode, @PMArray String[] permissions, @GrantResult int[] grantResults) {
+        Toast.makeText(ActivityManage.peek(), "permissionsDeny " + permissions[0], Toast.LENGTH_LONG).show();
+    }
 
     @PermissionRationale
     public void permissionRationale(@RequestCode int requestCode, @PMArray String[] rationalePermissions, @GrantResult int[] grantResults) {

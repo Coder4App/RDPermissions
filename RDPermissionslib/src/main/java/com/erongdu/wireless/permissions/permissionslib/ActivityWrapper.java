@@ -27,6 +27,12 @@ public class ActivityWrapper extends BaseWrapper {
     @Override
     public void request() {
         super.request();
-        ActivityCompat.requestPermissions(getActivity(), getPermissions(), getRequestCode());
+
+        if (shouldShowRationale(getPermissions())) {
+            ActivityCompat.requestPermissions(getActivity(), getPermissions(), getRequestCode());
+        } else {
+            //第一申请权限 shouldShowRationale 默认都是false 所以添加这个
+            ActivityCompat.requestPermissions(getActivity(), getPermissions(), getRequestCode());
+        }
     }
 }

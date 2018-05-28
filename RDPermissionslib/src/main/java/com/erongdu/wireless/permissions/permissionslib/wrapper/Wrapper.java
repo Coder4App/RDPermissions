@@ -20,7 +20,12 @@ public interface Wrapper {
     Wrapper requestPermission(String... permissions);
 
     /**
-     * request the permissions with rationale
+     * request the permissions with  custom rationale
+     */
+    Wrapper requestWithCustomRationale();
+
+    /**
+     * request the permissions with  custom rationale
      */
     Wrapper requestWithRationale();
 
